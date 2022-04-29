@@ -2,63 +2,72 @@ const algosdk = require("algosdk");
 const fs = require("fs");
 const path = require("path");
 
-const algodClient = new algosdk.Algodv2(
-  process.env.ALGOD_TOKEN,
-  process.env.ALGOD_SERVER,
-  process.env.ALGOD_PORT
-);
+const algodClient = new algosdk.Algodv2(process.env.ALGOD_TOKEN, process.env.ALGOD_SERVER, process.env.ALGOD_PORT);
 
 const submitToNetwork = async (signedTxn) => {
     // send txn
     let tx = await algodClient.sendRawTransaction(signedTxn).do();
     console.log("Transaction : " + tx.txId);
-  
+
     // Wait for transaction to be confirmed
     confirmedTxn = await algosdk.waitForConfirmation(algodClient, tx.txId, 4);
-  
+
     //Get the completed Transaction
-    console.log(
-      "Transaction " +
-        tx.txId +
-        " confirmed in round " +
-        confirmedTxn["confirmed-round"]
-    );
-  
+    console.log("Transaction " + tx.txId + " confirmed in round " + confirmedTxn["confirmed-round"]);
+
     return confirmedTxn;
-  };
+};
 
 (async () => {
-  // Compile TEAL code
-  const filePath = path.join(__dirname, "../artifacts/teal_demo.teal");
-  const data = fs.readFileSync(filePath);
-  const compiledProgram = await algodClient.compile(data).do();
+    // Compile TEAL code
+    const filePath = path.join(__dirname, "../artifacts/teal_demo.teal");
+    const data = fs.readFileSync(filePath);
+    const compiledProgram = await algodClient.compile(data).do();
 
-  // Convert program to bytecode
-  const programBytes = new Uint8Array(Buffer.from(compiledProgram.result, "base64"));
-  
-  // Input a amount to check
-  const limitAmount = 1e7;
-  const args = [algosdk.encodeUint64(limitAmount)];
+    // Convert program to bytecode
+    const programBytes = new Uint8Array(Buffer.from(compiledProgram.result, "base64"));
 
-  // Create logic signature from bytecode and arguments
-  const lsig = new algosdk.LogicSigAccount(programBytes, args);
-  const sender = algosdk.mnemonicToSecretKey(process.env.ACC1_MNEMONIC);
-  lsig.sign(sender.sk);
+    // Input a password
+    const password = "algorandIsAwesome";
+    const args = [];
+    args.push(Buffer.from(password));
 
-  // get suggested parameters
-  let suggestedParams = await algodClient.getTransactionParams().do();
+    // Create logic signature from bytecode and arguments
+    const lsig = new algosdk.LogicSigAccount(programBytes, args);
+    const sender = algosdk.mnemonicToSecretKey(process.env.ACC1_MNEMONIC);
+    lsig.sign(sender.sk);
 
-  // use the logic signature of the delegated acc1 to sign transaction
-  const receiver = algosdk.mnemonicToSecretKey(process.env.ACC2_MNEMONIC);
-  const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: lsig.address(),
-    to: receiver.addr,
-    amount: 1e7, // 10 Algo
-    suggestedParams,
-  });
+    // get suggested parameters
+    let suggestedParams = await algodClient.getTransactionParams().do();
 
-  // sign with logic signature
-  const lstx = algosdk.signLogicSigTransactionObject(txn, lsig);
+    // perform atomic transfer
+    const receiver = algosdk.mnemonicToSecretKey(process.env.ACC2_MNEMONIC);
+    const txn1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+        from: lsig.address(),
+        to: receiver.addr,
+        amount: 1e6, // 1 Algo
+        suggestedParams,
+    });
 
-  await submitToNetwork(lstx.blob);
+    const creator = algosdk.mnemonicToSecretKey(process.env.MNEMONIC_CREATOR);
+    const txn2 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+        from: lsig.address(),
+        to: creator.addr,
+        amount: Math.round(1e6 * 0.1), // 1 Algo
+        suggestedParams,
+    });
+
+    // Assign group ID
+    let txns = [txn1, txn2];
+    let txgroup = algosdk.assignGroupID(txns);
+
+    // Sign with logic signature
+    const lstx1 = algosdk.signLogicSigTransactionObject(txn1, lsig);
+    const lstx2 = algosdk.signLogicSigTransactionObject(txn2, lsig);
+
+    // Combined signed txns
+    let signed = [];
+    signed.push(lstx1.blob, lstx2.blob);
+
+    await submitToNetwork(signed);
 })();
