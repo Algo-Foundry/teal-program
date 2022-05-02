@@ -1,18 +1,5 @@
 #pragma version 6
 // check password
-arg 0
-byte base64 YWxnb3JhbmRJc0F3ZXNvbWU=
-==
 // creator receives 10% of the 1st txn amount
-gtxn 1 Amount
-gtxn 0 Amount
-int 10
-/
-==
 // receiver for 2nd txn should be the creator's address
-gtxn 1 Receiver
-addr EXWYCKUQXOSKGUU7RHTVFLNDVFPSDJRB5DABIA7I6BVHFYQD4CQJYZX3NA 
-==
-&&
-&&
-return
+
