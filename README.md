@@ -1,6 +1,6 @@
 # TEAL assignment
 
-In this assignment, you will be tasked to complete the TEAL program in `artifacts/teal_demo.teal` that checks the atomic transfer performed in `main.js`.
+In this assignment, you will be tasked to complete the TEAL program in `artifacts/teal_program.teal` that checks the atomic transfer performed in `main.js`.
 
 The atomic transfer includes 2 transactions, the 1st transaction involves sending 1 Algos to the 2nd account. The 2nd transaction involves sending 10% of the 1st transaction amount to the creator account. A password `algorandIsAwesome` is also sent to the program as a transaction argument.
 
