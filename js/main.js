@@ -20,7 +20,7 @@ const submitToNetwork = async (signedTxn) => {
 
 (async () => {
     // Compile TEAL code
-    const filePath = path.join(__dirname, "../artifacts/teal_demo.teal");
+    const filePath = path.join(__dirname, "../artifacts/teal_program.teal");
     const data = fs.readFileSync(filePath);
     const compiledProgram = await algodClient.compile(data).do();
 
