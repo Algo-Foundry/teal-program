@@ -11,9 +11,6 @@ You will need to write a TEAL program to check the following,
 
 To test your TEAL program, change the transaction amount, creator's address and see if your program rejects the transaction.
 
-## Hints
-1. To check strings, you will need to encode them to base64 format in TEAL programs.
-
 ## Setup instructions
 
 ### 1. Install packages
