@@ -15,7 +15,7 @@ To test your TEAL program, change the transaction amount, creator's address and 
 
 ### 1. Install packages
 ```
-npm install
+yarn install
 ```
 
 ### 2. Update environement variables
